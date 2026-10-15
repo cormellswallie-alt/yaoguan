@@ -206,6 +206,12 @@
         <button class="li" data-act="diag" style="width:100%;text-align:left">${ic('refresh', 20)}<div class="f1"><div style="font-size:14px">熵源自检</div><div class="mute" style="font-size:11px">测试各物理熵源连通性与随机性</div></div>${ic('chev', 16)}</button>
         <button class="li" data-act="about-trng" style="width:100%;text-align:left">${ic('book', 20)}<div class="f1"><div style="font-size:14px">真随机是怎么实现的</div></div>${ic('chev', 16)}</button>
       </div></div>
+      <div class="px mt18 lbl">显示</div>
+      <div class="px mt10"><div class="card" style="padding:14px 14px 12px">
+        <div class="row" style="justify-content:space-between"><div><div style="font-size:14px">屏幕刷新率</div><div class="mute" style="font-size:11px;margin-top:2px" id="rrinfo">读取中…</div></div><span class="serif" id="rrcur" style="font-size:20px;font-weight:700">—</span></div>
+        <div class="seg3 mt12" id="rrseg" style="grid-template-columns:repeat(4,1fr)">${[['auto', '自动'], ['60', '60'], ['90', '90'], ['120', '120']].map(([k, n]) => `<button data-rr="${k}" class="${(s.refresh || 'max') === k || ((s.refresh || 'max') === 'max' && k === '120') ? 'on' : ''}">${n}${k !== 'auto' ? '<small style="font-size:9px"> Hz</small>' : ''}</button>`).join('')}</div>
+        <div class="row mt10" style="justify-content:space-between"><span class="mute" style="font-size:11px">实测帧率</span><span class="serif" id="fps" style="font-size:13px;font-weight:600">—</span></div>
+      </div></div>
       <div class="px mt18 lbl">偏好</div>
       <div class="px mt10"><div class="card list">
         <div class="li"><div class="f1" style="font-size:14px">震动反馈</div><button class="sw ${s.haptics ? 'on' : ''}" data-sw="haptics"></button></div>
@@ -222,6 +228,34 @@
     mount(v) {
       const s = Y.settings;
       const nm = v.querySelector('#nm'); nm.onchange = () => { s.name = nm.value.trim().slice(0, 12); Y.saveSettings(); Y.render(); };
+      // ---- 刷新率 ----
+      const RR = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.RefreshRate;
+      const info = v.querySelector('#rrinfo'), cur = v.querySelector('#rrcur'), fpsEl = v.querySelector('#fps');
+      const loadInfo = () => {
+        if (!RR) { info.textContent = '仅在 App 内可调（浏览器预览不支持）'; return; }
+        RR.getInfo().then(r => {
+          const sup = (r.supported || []).join(' / ');
+          info.textContent = sup ? `本机支持 ${sup} Hz` : '未读取到屏幕模式';
+          cur.textContent = (r.current || '—') + ' Hz';
+          v.querySelectorAll('[data-rr]').forEach(b => {
+            const k = b.dataset.rr; const n = +k;
+            if (n && r.supported && r.supported.length && !r.supported.some(x => Math.abs(x - n) <= 1)) { b.disabled = true; b.title = '本机不支持'; }
+          });
+        }).catch(() => { info.textContent = '读取失败'; });
+      };
+      loadInfo();
+      // 实测：requestAnimationFrame 计数
+      let frames = 0, t0 = performance.now(), alive = true;
+      const loop = t => { if (!alive) return; frames++; if (t - t0 >= 1000) { fpsEl.textContent = Math.round(frames * 1000 / (t - t0)) + ' fps'; frames = 0; t0 = t; } requestAnimationFrame(loop); };
+      requestAnimationFrame(loop);
+      window.__leave = () => { alive = false; };
+      v.querySelector('#rrseg').onclick = e => {
+        const b = e.target.closest('[data-rr]'); if (!b || b.disabled) return;
+        const k = b.dataset.rr; s.refresh = k === '120' ? 'max' : k; Y.saveSettings();
+        v.querySelectorAll('[data-rr]').forEach(x => x.classList.toggle('on', x === b));
+        if (RR) RR.set({ mode: k === '120' ? '120' : k }).then(r => { cur.textContent = (r.current || '—') + ' Hz'; Y.toast(k === 'auto' ? '刷新率交给系统' : `已请求 ${r.target} Hz`); setTimeout(loadInfo, 600); });
+        else Y.toast('预览环境不支持切换');
+      };
       v.onclick = async e => {
         const b = e.target.closest('[data-sw],[data-act]'); if (!b) return;
         if (b.dataset.sw) { s[b.dataset.sw] = !s[b.dataset.sw]; Y.saveSettings(); b.classList.toggle('on', s[b.dataset.sw]); return; }

@@ -242,6 +242,8 @@
     T.sensor.start();
     document.addEventListener('pointerdown', e => T.sensor.touch(e), { passive: true });
     stack = []; go('home');
+    setStatusBar(true); // 开屏期间为墨色
+    setTimeout(() => setStatusBar(false), sessionStorage.getItem('yg.splashed') ? 500 : 2500);
     try { const SS = window.Capacitor && Capacitor.Plugins.SplashScreen; SS && SS.hide(); } catch (e) {}
     try {
       const A = window.Capacitor && Capacitor.Plugins.App;

@@ -36,16 +36,10 @@ Image.new('RGB', (S, S), RED).save(os.path.join(A, 'icon-background.png'))
 
 # 启动图 2732
 L = 2732
-sp = Image.new('RGBA', (L, L), PAPER + (255,))
-paste_center(sp, glyph(420, '爻观', INK + (255,)), cy=L // 2 - 60)
+sp = Image.new('RGBA', (L, L), (18, 16, 13, 255))
 seal = Image.new('RGBA', (120, 120), RED + (255,))
 paste_center(seal, glyph(80, '观', PAPER + (255,)))
-sp.alpha_composite(seal, (L // 2 + 330, L // 2 - 160))
-sub = glyph(64, '六 爻 排 盘', (142, 133, 119, 255), font='/tmp/serif.ttf')
-paste_center(sp, sub, cy=L // 2 + 200)
 sp.convert('RGB').save(os.path.join(A, 'splash.png'))
-dk = Image.new('RGBA', (L, L), (18, 16, 13, 255))
-paste_center(dk, glyph(420, '爻观', (238, 230, 214, 255)), cy=L // 2 - 60)
-dk.alpha_composite(seal, (L // 2 + 330, L // 2 - 160))
+dk = sp.copy()
 dk.convert('RGB').save(os.path.join(A, 'splash-dark.png'))
 print('icons ok')

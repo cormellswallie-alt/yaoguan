@@ -12,14 +12,17 @@
  .view{padding-top:calc(env(safe-area-inset-top,0px) + 6px)}
  .tb{bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
  .sheet{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 28px)}
- #boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:#F2ECE1;z-index:100;transition:opacity .4s}
- #boot b{font-family:"YG Cal",serif;font-weight:400;font-size:64px;color:#1A1714;letter-spacing:6px}
- #boot span{font-size:11px;letter-spacing:4px;color:#8E8577}
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div id="boot"><b>爻观</b><span>六 爻 排 盘</span></div>
+<div id="splash">
+  <div class="sp-ink"></div>
+  <div class="sp-hx out"><div><i style="width:120px"></i></div><div><i style="width:120px"></i></div><div><i style="width:120px"></i></div><div><i style="width:52px"></i><i style="width:52px"></i></div><div><i style="width:52px"></i><i style="width:52px"></i></div><div><i style="width:52px"></i><i style="width:52px"></i></div></div>
+  <div class="sp-name">爻观</div>
+  <div class="sp-seal">观</div>
+  <div class="sp-sub">六 爻 排 盘</div>
+</div>
 <script src="js/lunar.js"></script>
 <script src="data/zhouyi.js"></script>
 <script src="js/najia.js"></script>
@@ -29,7 +32,16 @@
 <script src="js/pages-pan.js"></script>
 <script src="js/pages-more.js"></script>
 <script>
-  window.__YG.boot().then(() => { const b = document.getElementById('boot'); b.style.opacity = 0; setTimeout(() => b.remove(), 450); });
+  (function () {
+    const sp = document.getElementById('splash');
+    const t0 = performance.now();
+    const MIN = sessionStorage.getItem('yg.splashed') ? 600 : 2650; // 首次完整播放；热启动快速过渡
+    if (sessionStorage.getItem('yg.splashed')) sp.querySelectorAll('*').forEach(e => { e.style.animationDelay = '0s'; e.style.animationDuration = '.25s'; });
+    sp.classList.add('light');
+    const close = () => { sp.classList.add('done'); setTimeout(() => sp.remove(), 460); sessionStorage.setItem('yg.splashed', '1'); };
+    sp.addEventListener('click', () => { if (performance.now() - t0 > 900) close(); });
+    window.__YG.boot().then(() => setTimeout(close, Math.max(0, MIN - (performance.now() - t0))));
+  })();
 </script>
 </body>
 </html>

@@ -62,7 +62,7 @@ const step = (n) => console.log('✓', n);
   click(d.querySelector('.sheet [data-p]:not([disabled])')); await sleep(30);
   click('.dim'); await sleep(30);
   click('[data-tab="duan"]'); await sleep(60);
-  assert(txt().includes('综合断语') && txt().includes('应期推演'), '断卦页'); step('断卦页：' + d.querySelector('.view .cal[style*="font-size:50px"]').textContent);
+  assert((txt().includes('以爻辞断') || txt().includes('理论推测')) && txt().includes('应期推演'), '断卦页'); step('断卦页：' + d.querySelector('.view .cal[style*="font-size:50px"]').textContent);
   click('[data-v="ok"]'); await sleep(30);
   click('[data-tab="note"]'); await sleep(30);
   d.querySelector('#nt').value = '测试笔记'; click('[data-act="addnote"]'); await sleep(30);
@@ -80,7 +80,7 @@ const step = (n) => console.log('✓', n);
   click('[data-act="search"]'); await sleep(20);
   click('.tb [data-go="calendar"]'); await sleep(40); assert(txt().includes('旬空'), '万年历');
   click('[data-mv="1"]'); await sleep(20); click('[data-mv="-1"]'); await sleep(20); click('.cd[data-d]'); await sleep(20); step('万年历');
-  click('.tb [data-go="me"]'); await sleep(40); assert(txt().includes('量子随机源'), '我的'); step('我的');
+  click('.tb [data-go="me"]'); await sleep(40); assert(txt().includes('量子随机源') && txt().includes('屏幕刷新率'), '我的'); click('[data-rr="90"]'); await sleep(20); step('我的 + 刷新率');
   click('[data-act="diag"]'); await sleep(200); assert(txt().includes('NIST'), '自检'); step('熵源自检');
   click('.tb [data-go="home"]'); await sleep(30); click('[data-go="dict"]'); await sleep(40);
   click('[data-by="pal"]'); await sleep(30); assert(d.querySelectorAll('.gg button').length === 64, '卦典 64'); step('卦典八宫');
@@ -96,6 +96,22 @@ const step = (n) => console.log('✓', n);
     assert(txt().includes('本 卦'), m + ' 成卦');
   }
   step('时间 / 报数 / 汉字 / 手工 起卦');
+  // 一爻独发 → 以爻辞断；两爻动 → 理论推测
+  const mk = async (vals) => {
+    click('.tb [data-go="ask"]'); await sleep(30);
+    const qq = d.querySelector('#q'); qq.value = '断语模式'; qq.dispatchEvent(new w.Event('input'));
+    click('[data-m="manual"]'); await sleep(20); click('[data-act="start"]'); await sleep(30);
+    vals.forEach((v, i) => click(`[data-i="${i}"][data-v="${v}"]`));
+    await sleep(20); click('[data-act="ok"]'); await sleep(40); click('[data-tab="duan"]'); await sleep(50);
+  };
+  await mk([9, 7, 7, 8, 8, 8]);   // 泰 初九独发：征吉 → 吉
+  assert(txt().includes('以爻辞断') && txt().includes('征吉'), '独发爻断语');
+  assert(d.querySelector('.view .cal[style*="font-size:50px"]').textContent === '吉', '泰初九 = 吉');
+  await mk([9, 7, 7, 6, 8, 8]);
+  assert(txt().includes('理论推测') && !txt().includes('以爻辞断'), '多爻动为理论推测');
+  await mk([7, 7, 7, 8, 8, 8]);
+  assert(txt().includes('静卦') && txt().includes('理论推测'), '静卦为理论推测');
+  step('断语模式：独发取爻辞 / 多动与静卦标注理论推测');
   // 离线摇钱：无量子
   click('.tb [data-go="ask"]'); await sleep(30);
   const q2 = d.querySelector('#q'); q2.value = '离线'; q2.dispatchEvent(new w.Event('input'));

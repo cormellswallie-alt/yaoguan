@@ -71,6 +71,14 @@
     },
   };
 
+  // 变卦中未发动的爻：淡墨描线（空心爻 + 浅墨小字 + “同”标记），与动爻变出的朱砂实爻形成对比
+  function ghostBar(yang, w, h) {
+    const seg = (ww) => `<i class="gh" style="width:${ww}px;height:${h}px"></i>`;
+    return `<div class="hx ghx" style="width:${w}px">${yang ? `<div class="y">${seg(w)}</div>` : `<div class="y">${seg((w - 6) / 2)}${seg((w - 6) / 2)}</div>`}</div>`;
+  }
+  function ghostText(lq, x) {
+    return `<span class="ghost"><em>${lq}</em> ${x.zhi}<span class="gw">${x.wx}</span><i class="tong">同</i></span>`;
+  }
   function panTable(c, pan, ys, HB) {
     const ysYao = ys.yao && !ys.fu ? ys.yao.pos : 0;
     const rows = pan.yao.slice().reverse().map(y => {
@@ -79,19 +87,19 @@
       const bianLine = pan.bian ? pan.bian[i] === '1' : null;
       return `<button class="pr ${y.moving ? 'mv' : ''} ${y.pos === ysYao ? 'ys' : ''}" data-yao="${y.pos}" style="width:100%;text-align:left">
         <span class="ls">${y.liushen}</span>
-        <span class="fs">${y.fushen ? `${y.fushen.liuqin}<br>${y.fushen.gan}${y.fushen.zhi}${y.fushen.wx}` : ''}</span>
-        <span class="lq"><b style="${y.pos === ysYao ? 'color:var(--jade)' : ''}">${y.liuqin}</b> ${y.gan}${y.zhi}<span style="color:${WX_C[y.wx]}">${y.wx}</span>${y.kong ? '<span class="kong">空</span>' : ''}<small style="${y.pos === ysYao ? 'color:var(--jade)' : ''}">${[y.pos === ysYao ? '用神' : '', y.guashen ? '卦身' : '', y.yuePo ? '月破' : '', y.anDong ? '暗动' : ''].filter(Boolean).join(' · ') || y.wangshuai}</small></span>
-        <span>${yaoBar(y.yang, y.moving, 36, 6)}</span>
+        <span class="fs">${y.fushen ? `<i>${y.fushen.liuqin}</i><i>${y.fushen.gan}${y.fushen.zhi}<span class="wx">${y.fushen.wx}</span></i>` : ''}</span>
+        <span class="lq"><span class="m"><b style="${y.pos === ysYao ? 'color:var(--jade)' : ''}">${y.liuqin}</b>${y.gan}${y.zhi}<span class="wx" style="color:${WX_C[y.wx]}">${y.wx}</span>${y.kong ? '<span class="kong">空</span>' : ''}</span><small style="${y.pos === ysYao ? 'color:var(--jade)' : ''}">${[y.pos === ysYao ? '用神' : '', y.guashen ? '卦身' : '', y.yuePo ? '月破' : '', y.anDong ? '暗动' : ''].filter(Boolean).join('·') || y.wangshuai}</small></span>
+        <span>${yaoBar(y.yang, y.moving, 30, 6)}</span>
         <span>${y.shi ? '<span class="seal" style="width:18px;height:18px;font-size:10px">世</span>' : y.ying ? '<span class="sealo" style="width:18px;height:18px;font-size:10px">应</span>' : ''}</span>
         <span class="mk">${y.val === 9 ? '○' : y.val === 6 ? '×' : ''}</span>
-        <span style="padding-left:4px">${pan.bian ? yaoBar(bianLine, y.moving, 32, 5, y.moving ? null : '#BDB3A3') : ''}</span>
-        <span class="lq bq">${b ? `<b>${b.liuqin}</b> ${b.zhi}<span>${b.wx}</span>${b.kong ? '<span class="kong">空</span>' : ''}<small>${esc(b.rel || '')}</small>` : (pan.bian ? `<span style="opacity:.55">${N.liuqin(pan.benInfo.wx, N.najia(pan.bian)[i].wx)} ${N.najia(pan.bian)[i].zhi}</span>` : '')}</span>
+        <span style="padding-left:4px">${pan.bian ? (y.moving ? yaoBar(bianLine, true, 28, 5) : ghostBar(bianLine, 28, 5)) : ''}</span>
+        <span class="lq bq">${b ? `<span class="m"><b>${b.liuqin}</b>${b.zhi}<span class="wx">${b.wx}</span>${b.kong ? '<span class="kong">空</span>' : ''}</span>${b.rel ? `<small>${esc(b.rel.split(' · ').slice(0, 2).join('·') + (b.rel.split(' · ').length > 2 ? '…' : ''))}</small>` : ''}` : (pan.bian ? ghostText(N.liuqin(pan.benInfo.wx, N.najia(pan.bian)[i].wx), N.najia(pan.bian)[i]) : '')}</span>
       </button>`;
     }).join('');
     const ss = pan.shensha;
     const H = BY_LINES[pan.ben];
     return `
-      <div class="pan card mt12" style="--split:${pan.bian ? '61%' : '200%'}">
+      <div class="pan card mt12 ${pan.bian ? 'has-bian' : ''}">
         <div class="pr hd"><span style="text-align:center">六神</span><span>伏神</span><span>本卦</span><span></span><span></span><span></span><span style="padding-left:4px">${pan.bian ? '变卦' : ''}</span><span></span></div>
         ${rows}
       </div>
@@ -131,8 +139,12 @@
     score += yuanMv.length * 6 - jiMv.length * 8;
     if (pan.benInfo.liuhe) score += 4; if (pan.benInfo.liuchong) score -= 4;
     if (yy && N.SHENG[yy.wx] === shi.wx) score += 5; if (yy && N.KE[yy.wx] === shi.wx) score -= 3;
-    const L = score >= 72 ? 0 : score >= 58 ? 1 : score >= 44 ? 2 : score >= 32 ? 3 : 4;
     const LV = ['大吉', '吉', '小吉', '平', '凶'];
+    // 一爻独发：以独发之爻爻辞的吉凶断语为准；否则按规则引擎推测
+    const movers = pan.yao.filter(o => o.moving);
+    const H0 = BY_LINES[pan.ben];
+    const solo = movers.length === 1 && H0.jx ? { y: movers[0], jx: H0.jx[movers[0].pos - 1], text: H0.yao[movers[0].pos - 1] } : null;
+    const L = solo ? solo.jx[0] : (score >= 72 ? 0 : score >= 58 ? 1 : score >= 44 ? 2 : score >= 32 ? 3 : 4);
     // 要点
     const pts = [];
     if (yy) {
@@ -181,9 +193,15 @@
     return `
       <div class="px mt12"><div style="border-radius:24px;background:#1A1714;color:#EEE6D6;padding:18px 18px 16px;position:relative;overflow:hidden">
         <div class="cal" style="position:absolute;right:-6px;top:-18px;font-size:120px;line-height:1;color:#fff;opacity:.05">${BY_LINES[pan.ben].name[0]}</div>
-        <div class="row gap8"><span style="font-size:10.5px;letter-spacing:2px;color:#9C9282">综合断语</span><span class="st" style="background:rgba(201,164,106,.16);color:#D9B678;height:18px;font-size:10px">规则推演 · 仅供参考</span></div>
+        ${solo
+          ? `<div class="row gap8"><span style="font-size:10.5px;letter-spacing:2px;color:#9C9282">一爻独发 · 以爻辞断</span><span class="st" style="background:rgba(217,87,63,.18);color:#E9826D;height:18px;font-size:10px">${H0.name} ${yaoTitle(pan.ben, solo.y.pos - 1)}</span></div>
+        <div class="row gap12 mt10" style="align-items:flex-end"><span class="cal" style="font-size:50px;line-height:1;color:#F2ECE1">${LV[L]}</span>
+          <div style="font-size:12.5px;line-height:19px;color:#C8BEAC;padding-bottom:3px">断语「<b style="color:#E9826D">${esc(solo.jx[1] || '无明确吉凶辞')}</b>」${ev[1] ? `<br>留意 <b style="color:#E9826D">${pad2(ev[1].d.getMonth() + 1)}/${pad2(ev[1].d.getDate())} ${ev[1].g}</b> ${ev[1].t}` : ''}</div></div>
+        <div class="serif" style="margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);font-size:14px;line-height:23px;color:#EEE6D6">${esc(solo.text)}</div>`
+          : `<div class="row gap8"><span style="font-size:10.5px;letter-spacing:2px;color:#9C9282">${movers.length ? movers.length + ' 爻发动' : '静卦'} · 综合推演</span><span class="st" style="background:rgba(201,164,106,.18);color:#D9B678;height:18px;font-size:10px">理论推测</span></div>
         <div class="row gap12 mt10" style="align-items:flex-end"><span class="cal" style="font-size:50px;line-height:1;color:#F2ECE1">${LV[L]}</span>
           <div style="font-size:12.5px;line-height:19px;color:#C8BEAC;padding-bottom:3px">${['用神有力，事可速成', '用神得助，事可成', '事可成，时尚未至', '吉凶参半，宜守待时', '用神受制，不宜强求'][L]}${ev[1] ? `<br>留意 <b style="color:#E9826D">${pad2(ev[1].d.getMonth() + 1)}/${pad2(ev[1].d.getDate())} ${ev[1].g}</b> ${ev[1].t}` : ''}</div></div>
+        <div style="margin-top:10px;font-size:10.5px;line-height:16px;color:#857C6E">⚠ 此结论由旺衰、生克、动变规则推算得出，属理论推测，非经文断语。</div>`}
         <div class="row mt14" style="gap:4px">${[0, 1, 2, 3, 4].map(i => `<div class="f1" style="height:5px;border-radius:3px;background:${i <= L ? ['#8E2A21', '#B0352A', '#D9573F', '#C9A46A', '#857C6E'][i] : '#3B352D'};${i === L ? 'box-shadow:0 0 0 2px #1A1714,0 0 0 3.5px ' + ['#8E2A21', '#B0352A', '#D9573F', '#C9A46A', '#857C6E'][i] : ''}"></div>`).join('')}</div>
         <div class="row mt6" style="justify-content:space-between;font-size:9.5px;color:#6E665A">${LV.map((x, i) => `<span style="${i === L ? 'color:#E9826D' : ''}">${x}</span>`).join('')}</div>
       </div></div>
@@ -213,7 +231,7 @@
       <div class="px mt14"><div class="lbl">应验反馈</div>
         <div class="row gap8 mt10">${[['ok', '已应'], ['no', '未应'], ['wait', '待验']].map(([k, n]) => `<button class="chip f1 ${c.verdict === k ? 'on' : ''}" style="justify-content:center" data-v="${k}">${n}</button>`).join('')}</div>
       </div>
-      <div class="px mt12 mute" style="font-size:10.5px;line-height:17px;text-align:center">断语由规则引擎依旺衰、生克、动变推演生成，<br>不能替代你自己的判断。</div>`;
+      <div class="px mt12 mute" style="font-size:10.5px;line-height:17px;text-align:center">${solo ? '一爻独发取该爻爻辞断语；用神、生克、应期为理论推测，' : '综合吉凶与应期均为规则引擎的理论推测，'}<br>不能替代你自己的判断。</div>`;
   }
 
   // ---------------- 笔记 ----------------

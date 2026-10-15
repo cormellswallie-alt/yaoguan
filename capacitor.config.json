@@ -2,18 +2,19 @@
   "appId": "art.yaoguan.app",
   "appName": "爻观",
   "webDir": "www",
-  "backgroundColor": "#F2ECE1",
+  "backgroundColor": "#12100D",
   "android": {
     "allowMixedContent": false,
     "adjustMarginsForEdgeToEdge": "auto"
   },
   "plugins": {
     "SplashScreen": {
-      "launchShowDuration": 1200,
+      "launchShowDuration": 0,
       "launchAutoHide": true,
-      "backgroundColor": "#F2ECE1",
+      "backgroundColor": "#12100D",
       "showSpinner": false,
-      "androidScaleType": "CENTER_CROP"
+      "androidScaleType": "CENTER_CROP",
+      "launchFadeOutDuration": 0
     },
     "StatusBar": {
       "style": "LIGHT",

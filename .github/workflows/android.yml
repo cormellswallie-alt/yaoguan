@@ -50,7 +50,7 @@ jobs:
           npx cap add android
           npx capacitor-assets generate --android \
             --iconBackgroundColor '#B0352A' --iconBackgroundColorDark '#B0352A' \
-            --splashBackgroundColor '#F2ECE1' --splashBackgroundColorDark '#12100D'
+            --splashBackgroundColor '#12100D' --splashBackgroundColorDark '#12100D'
           npx cap sync android
 
       - name: Patch Android project (权限 / 版本 / 签名)

@@ -39,6 +39,13 @@ if 'signingConfigs' not in g:
     g = re.sub(r'minifyEnabled true', 'minifyEnabled false', g)
 open(bg, 'w', encoding='utf-8').write(g)
 
+# ---- 原生插件：刷新率 ----
+import shutil
+pkg = os.path.join(AND, 'app/src/main/java/art/yaoguan/app')
+os.makedirs(pkg, exist_ok=True)
+for f in ('MainActivity.java', 'RefreshRatePlugin.java'):
+    shutil.copy(os.path.join(ROOT, 'native', f), os.path.join(pkg, f))
+
 # ---- 状态栏 / 导航栏颜色（主题） ----
 st = os.path.join(AND, 'app/src/main/res/values/styles.xml')
 if os.path.exists(st):
