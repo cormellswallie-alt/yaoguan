@@ -1,0 +1,25 @@
+{
+  "name": "yaoguan",
+  "version": "1.0.0",
+  "private": true,
+  "description": "爻观 · 六爻排盘（物理真随机摇钱起卦）",
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/najia.test.js && node test/smoke.cjs",
+    "fonts": "python3 scripts/fonts.py",
+    "icons": "python3 scripts/icons.py",
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.4.4",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/core": "7.4.4",
+    "@capacitor/splash-screen": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "7.4.4",
+    "jsdom": "^24.1.0"
+  }
+}

@@ -1,0 +1,84 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          npm install --no-audit --no-fund
+          pip install fonttools brotli pillow
+
+      - name: Tests (排盘引擎 + 全流程冒烟)
+        run: npm test
+
+      - name: Subset fonts & generate icons
+        run: |
+          python3 scripts/fonts.py
+          python3 scripts/icons.py
+          ls -la www/fonts assets
+
+      - name: Add Android platform
+        run: |
+          npx cap add android
+          npx capacitor-assets generate --android \
+            --iconBackgroundColor '#B0352A' --iconBackgroundColorDark '#B0352A' \
+            --splashBackgroundColor '#F2ECE1' --splashBackgroundColorDark '#12100D'
+          npx cap sync android
+
+      - name: Patch Android project (权限 / 版本 / 签名)
+        run: python3 scripts/patch_android.py
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Collect APK
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk dist/yaoguan-${GITHUB_SHA::7}.apk
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yaoguan-apk
+          path: dist/*.apk
+          retention-days: 30
+
+      - name: Publish release (tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.apk
+          generate_release_notes: true
